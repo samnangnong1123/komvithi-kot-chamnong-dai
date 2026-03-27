@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="km">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>កម្មវិធីកត់ចំណងដៃ</title>
+    <meta
+      name="description"
+      content="Website កត់ចំណងដៃសម្រាប់ទទួលភ្ញៀវ និងកត់ត្រាចំណងដៃ អាច deploy ទៅ Vercel បាន។"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Battambang:wght@300;400;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">Wedding Gift Record</p>
+          <h1>កម្មវិធីកត់ចំណងដៃ</h1>
+          <p class="hero__text">
+            សម្រាប់កត់ត្រាឈ្មោះភ្ញៀវ ចំនួនទឹកប្រាក់ ឬអំណោយ និងតាមដានសរុបទាំងអស់បានងាយស្រួល។
+          </p>
+          <div class="hero__badges">
+            <span>ប្រើបានលើទូរស័ព្ទ</span>
+            <span>រក្សាទុកក្នុង Browser</span>
+            <span>Deploy ទៅ Vercel បានភ្លាម</span>
+          </div>
+        </div>
+        <div class="hero__card glass-card">
+          <p class="hero__card-title">សរុបរហ័ស</p>
+          <div class="stat-grid">
+            <article>
+              <span>ចំនួនភ្ញៀវ</span>
+              <strong id="guestCount">0</strong>
+            </article>
+            <article>
+              <span>សរុបទឹកប្រាក់</span>
+              <strong id="totalAmount">$0</strong>
+            </article>
+            <article>
+              <span>សរុបប្រាក់រៀល</span>
+              <strong id="rielAmount">៛0</strong>
+            </article>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="panel glass-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Form</p>
+              <h2>បញ្ចូលចំណងដៃ</h2>
+            </div>
+          </div>
+
+          <form id="giftForm" class="gift-form">
+            <label>
+              ឈ្មោះភ្ញៀវ
+              <input id="guestName" name="guestName" type="text" placeholder="ឧ. លោក សុខា" required />
+            </label>
+
+            <div class="split">
+              <label>
+                ទឹកប្រាក់
+                <input id="giftAmount" name="giftAmount" type="number" min="0" step="0.01" placeholder="ឧ. 50" required />
+              </label>
+
+              <label>
+                រូបិយប័ណ្ណ
+                <select id="currency" name="currency">
+                  <option value="$">USD ($)</option>
+                  <option value="៛">រៀល (៛)</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              ប្រភេទអំណោយ
+              <input id="giftType" name="giftType" type="text" placeholder="ឧ. ចំណងដៃ, កាដូ, ផ្កា" />
+            </label>
+
+            <label>
+              កំណត់ចំណាំ
+              <textarea id="note" name="note" rows="4" placeholder="ព័ត៌មានបន្ថែម..."></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button class="btn btn--primary" type="submit">រក្សាទុក</button>
+              <button class="btn btn--ghost" type="reset">សម្អាត</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel glass-card">
+          <div class="section-heading section-heading--row">
+            <div>
+              <p class="eyebrow">Records</p>
+              <h2>បញ្ជីចំណងដៃ</h2>
+            </div>
+            <div class="toolbar">
+              <input id="searchInput" type="search" placeholder="ស្វែងរកឈ្មោះ ឬកំណត់ចំណាំ" />
+              <button class="btn btn--ghost" id="exportBtn" type="button">Export CSV</button>
+            </div>
+          </div>
+
+          <div id="emptyState" class="empty-state">
+            <h3>មិនទាន់មានទិន្នន័យ</h3>
+            <p>ចាប់ផ្តើមដោយបញ្ចូលចំណងដៃដំបូងរបស់អ្នកខាងឆ្វេង។</p>
+          </div>
+
+          <div id="recordList" class="record-list" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="recordTemplate">
+      <article class="record-card">
+        <div class="record-card__top">
+          <div>
+            <h3 class="record-name"></h3>
+            <p class="record-meta"></p>
+          </div>
+          <strong class="record-amount"></strong>
+        </div>
+        <p class="record-note"></p>
+        <div class="record-card__bottom">
+          <span class="record-date"></span>
+          <button class="delete-btn" type="button">លុប</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
