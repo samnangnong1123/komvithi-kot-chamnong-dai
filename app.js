@@ -1,21 +1,24 @@
-const SUPABASE_TABLE = "wedding_gifts";
+const SUPABASE_TABLE = "stories";
 const REFRESH_INTERVAL_MS = 10000;
+const DEFAULT_COVER =
+  "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=80";
 
 const elements = {
-  form: document.getElementById("giftForm"),
-  guestName: document.getElementById("guestName"),
-  giftAmount: document.getElementById("giftAmount"),
-  currency: document.getElementById("currency"),
-  giftType: document.getElementById("giftType"),
-  note: document.getElementById("note"),
+  form: document.getElementById("storyForm"),
+  storyTitle: document.getElementById("storyTitle"),
+  authorName: document.getElementById("authorName"),
+  storyCategory: document.getElementById("storyCategory"),
+  coverUrl: document.getElementById("coverUrl"),
+  storyExcerpt: document.getElementById("storyExcerpt"),
+  storyContent: document.getElementById("storyContent"),
   searchInput: document.getElementById("searchInput"),
   exportBtn: document.getElementById("exportBtn"),
-  guestCount: document.getElementById("guestCount"),
-  totalAmount: document.getElementById("totalAmount"),
-  rielAmount: document.getElementById("rielAmount"),
+  storyCount: document.getElementById("storyCount"),
+  categoryCount: document.getElementById("categoryCount"),
+  wordCount: document.getElementById("wordCount"),
   emptyState: document.getElementById("emptyState"),
-  recordList: document.getElementById("recordList"),
-  recordTemplate: document.getElementById("recordTemplate"),
+  storyList: document.getElementById("storyList"),
+  storyTemplate: document.getElementById("storyTemplate"),
   statusBanner: document.getElementById("statusBanner"),
   syncText: document.getElementById("syncText")
 };
@@ -24,7 +27,7 @@ const appConfig = window.APP_CONFIG || {};
 const supabaseUrl = (appConfig.supabaseUrl || "").replace(/\/$/, "");
 const supabaseAnonKey = appConfig.supabaseAnonKey || "";
 
-let records = [];
+let stories = [];
 let pollTimer = null;
 let isLoading = false;
 
@@ -41,17 +44,6 @@ function escapeCsv(value) {
   return `"${String(value ?? "").replaceAll('"', '""')}"`;
 }
 
-function formatCurrency(amount, currency) {
-  if (currency === "KHR") {
-    return `៛${Math.round(Number(amount || 0)).toLocaleString()}`;
-  }
-
-  return `$${Number(amount || 0).toLocaleString(undefined, {
-    minimumFractionDigits: Number(amount || 0) % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2
-  })}`;
-}
-
 function formatDate(value) {
   return new Date(value).toLocaleString("km-KH", {
     dateStyle: "medium",
@@ -59,20 +51,21 @@ function formatDate(value) {
   });
 }
 
-function buildMeta(record) {
-  return [record.gift_type || "ចំណងដៃ", record.currency === "KHR" ? "រៀល" : "USD"]
-    .filter(Boolean)
-    .join(" • ");
+function toWordCount(text) {
+  return String(text || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
 }
 
-function filterRecords(keyword) {
+function filterStories(keyword) {
   const normalized = keyword.trim().toLowerCase();
   if (!normalized) {
-    return records;
+    return stories;
   }
 
-  return records.filter((record) =>
-    [record.guest_name, record.note, record.gift_type]
+  return stories.filter((story) =>
+    [story.title, story.author_name, story.category, story.excerpt, story.content]
       .join(" ")
       .toLowerCase()
       .includes(normalized)
@@ -80,37 +73,39 @@ function filterRecords(keyword) {
 }
 
 function renderSummary(items) {
-  const totalUSD = items
-    .filter((item) => item.currency === "USD")
-    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const totalKHR = items
-    .filter((item) => item.currency === "KHR")
-    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const categorySet = new Set(items.map((item) => item.category).filter(Boolean));
+  const words = items.reduce((sum, item) => sum + toWordCount(item.content), 0);
 
-  elements.guestCount.textContent = items.length.toLocaleString();
-  elements.totalAmount.textContent = formatCurrency(totalUSD, "USD");
-  elements.rielAmount.textContent = formatCurrency(totalKHR, "KHR");
+  elements.storyCount.textContent = items.length.toLocaleString();
+  elements.categoryCount.textContent = categorySet.size.toLocaleString();
+  elements.wordCount.textContent = words.toLocaleString();
 }
 
-function renderRecords(items) {
-  elements.recordList.innerHTML = "";
+function renderStories(items) {
+  elements.storyList.innerHTML = "";
   elements.emptyState.hidden = items.length > 0;
   renderSummary(items);
 
   const fragment = document.createDocumentFragment();
 
-  items.forEach((record) => {
-    const node = elements.recordTemplate.content.cloneNode(true);
-    node.querySelector(".record-name").textContent = record.guest_name;
-    node.querySelector(".record-meta").textContent = buildMeta(record);
-    node.querySelector(".record-amount").textContent = formatCurrency(record.amount, record.currency);
-    node.querySelector(".record-note").textContent = record.note || "មិនមានកំណត់ចំណាំ";
-    node.querySelector(".record-date").textContent = formatDate(record.created_at);
-    node.querySelector(".delete-btn").dataset.id = record.id;
+  items.forEach((story) => {
+    const node = elements.storyTemplate.content.cloneNode(true);
+    const cover = node.querySelector(".story-cover");
+    const content = node.querySelector(".story-content");
+
+    cover.src = story.cover_url || DEFAULT_COVER;
+    cover.alt = story.title;
+    node.querySelector(".story-title").textContent = story.title;
+    node.querySelector(".story-meta").textContent = `${story.author_name} • ${story.category || "Story"}`;
+    node.querySelector(".story-badge").textContent = `${toWordCount(story.content)} ពាក្យ`;
+    node.querySelector(".story-excerpt").textContent = story.excerpt || "មិនមានសេចក្តីសង្ខេប";
+    content.textContent = story.content;
+    node.querySelector(".record-date").textContent = formatDate(story.created_at);
+    node.querySelector(".delete-btn").dataset.id = story.id;
     fragment.appendChild(node);
   });
 
-  elements.recordList.appendChild(fragment);
+  elements.storyList.appendChild(fragment);
 }
 
 async function supabaseRequest(path, options = {}) {
@@ -138,30 +133,30 @@ async function supabaseRequest(path, options = {}) {
   return response.json();
 }
 
-async function loadRecords() {
+async function loadStories() {
   if (!hasSupabaseConfig() || isLoading) {
     return;
   }
 
   isLoading = true;
-  updateStatus("កំពុងទាញទិន្នន័យពី Supabase...", "muted");
+  updateStatus("កំពុងទាញរឿងពី Supabase...", "muted");
 
   try {
     const data = await supabaseRequest(
-      `${SUPABASE_TABLE}?select=id,guest_name,amount,currency,gift_type,note,created_at&order=created_at.desc`
+      `${SUPABASE_TABLE}?select=id,title,author_name,category,cover_url,excerpt,content,created_at&order=created_at.desc`
     );
-    records = Array.isArray(data) ? data : [];
-    renderRecords(filterRecords(elements.searchInput.value));
-    updateStatus(`ទាញទិន្នន័យចុងក្រោយបាននៅ ${formatDate(new Date().toISOString())}`, "success");
+    stories = Array.isArray(data) ? data : [];
+    renderStories(filterStories(elements.searchInput.value));
+    updateStatus(`ទាញរឿងចុងក្រោយបាននៅ ${formatDate(new Date().toISOString())}`, "success");
   } catch (error) {
-    console.error("Failed to load records:", error);
-    updateStatus("មិនអាចភ្ជាប់ទៅ Supabase បានទេ។ សូមពិនិត្យ config និង policy។", "danger");
+    console.error("Failed to load stories:", error);
+    updateStatus("មិនអាចភ្ជាប់ទៅ Supabase បានទេ។ សូមពិនិត្យ config និង SQL schema។", "danger");
   } finally {
     isLoading = false;
   }
 }
 
-async function addRecord(event) {
+async function addStory(event) {
   event.preventDefault();
 
   if (!hasSupabaseConfig()) {
@@ -169,43 +164,45 @@ async function addRecord(event) {
     return;
   }
 
-  const guestName = elements.guestName.value.trim();
-  const amount = Number(elements.giftAmount.value);
-  const currency = elements.currency.value;
-  const giftType = elements.giftType.value.trim();
-  const note = elements.note.value.trim();
+  const title = elements.storyTitle.value.trim();
+  const authorName = elements.authorName.value.trim();
+  const category = elements.storyCategory.value;
+  const coverUrl = elements.coverUrl.value.trim();
+  const excerpt = elements.storyExcerpt.value.trim();
+  const content = elements.storyContent.value.trim();
 
-  if (!guestName || Number.isNaN(amount) || amount < 0) {
-    updateStatus("សូមបញ្ចូលឈ្មោះភ្ញៀវ និងចំនួនទឹកប្រាក់ឲ្យត្រឹមត្រូវ។", "danger");
+  if (!title || !authorName || !content) {
+    updateStatus("សូមបំពេញចំណងជើង អ្នកនិពន្ធ និងខ្លឹមសាររឿងឲ្យគ្រប់។", "danger");
     return;
   }
 
-  updateStatus("កំពុងរក្សាទុកទៅ database...", "muted");
+  updateStatus("កំពុងបង្ហោះរឿងទៅ database...", "muted");
 
   try {
     await supabaseRequest(SUPABASE_TABLE, {
       method: "POST",
       body: [
         {
-          guest_name: guestName,
-          amount,
-          currency,
-          gift_type: giftType || null,
-          note: note || null
+          title,
+          author_name: authorName,
+          category,
+          cover_url: coverUrl || null,
+          excerpt: excerpt || null,
+          content
         }
       ]
     });
 
     elements.form.reset();
-    await loadRecords();
-    updateStatus("រក្សាទុកទៅ database បានជោគជ័យ។", "success");
+    await loadStories();
+    updateStatus("បង្ហោះរឿងបានជោគជ័យ។", "success");
   } catch (error) {
-    console.error("Failed to save record:", error);
-    updateStatus("រក្សាទុកមិនបានទេ។ សូមពិនិត្យ table/policy នៅ Supabase។", "danger");
+    console.error("Failed to save story:", error);
+    updateStatus("បង្ហោះរឿងមិនបានទេ។ សូមពិនិត្យ table/policy នៅ Supabase។", "danger");
   }
 }
 
-async function deleteRecord(event) {
+async function deleteStory(event) {
   const target = event.target;
   if (!(target instanceof HTMLButtonElement) || !target.dataset.id) {
     return;
@@ -216,36 +213,36 @@ async function deleteRecord(event) {
     return;
   }
 
-  updateStatus("កំពុងលុបទិន្នន័យ...", "muted");
+  updateStatus("កំពុងលុបរឿង...", "muted");
 
   try {
     await supabaseRequest(`${SUPABASE_TABLE}?id=eq.${encodeURIComponent(target.dataset.id)}`, {
       method: "DELETE",
       prefer: "return=minimal"
     });
-    await loadRecords();
-    updateStatus("លុបទិន្នន័យបានជោគជ័យ។", "success");
+    await loadStories();
+    updateStatus("លុបរឿងបានជោគជ័យ។", "success");
   } catch (error) {
-    console.error("Failed to delete record:", error);
-    updateStatus("លុបទិន្នន័យមិនបានទេ។ សូមពិនិត្យ delete policy។", "danger");
+    console.error("Failed to delete story:", error);
+    updateStatus("លុបរឿងមិនបានទេ។ សូមពិនិត្យ delete policy។", "danger");
   }
 }
 
 function exportCsv() {
-  const items = filterRecords(elements.searchInput.value);
+  const items = filterStories(elements.searchInput.value);
   if (!items.length) {
-    updateStatus("មិនមានទិន្នន័យសម្រាប់ export ទេ។", "muted");
+    updateStatus("មិនមានរឿងសម្រាប់ export ទេ។", "muted");
     return;
   }
 
-  const header = ["Guest Name", "Amount", "Currency", "Gift Type", "Note", "Created At"];
-  const rows = items.map((record) => [
-    record.guest_name,
-    record.amount,
-    record.currency,
-    record.gift_type,
-    record.note,
-    record.created_at
+  const header = ["Title", "Author", "Category", "Excerpt", "Content", "Created At"];
+  const rows = items.map((story) => [
+    story.title,
+    story.author_name,
+    story.category,
+    story.excerpt,
+    story.content,
+    story.created_at
   ]);
 
   const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
@@ -253,7 +250,7 @@ function exportCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "wedding-gifts.csv";
+  link.download = "stories.csv";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -261,7 +258,7 @@ function exportCsv() {
 function startAutoRefresh() {
   if (!hasSupabaseConfig()) {
     updateStatus("សូមកែ config.js ដាក់ Supabase URL និង anon key ជាមុនសិន។", "danger");
-    renderRecords([]);
+    renderStories([]);
     return;
   }
 
@@ -269,15 +266,15 @@ function startAutoRefresh() {
     clearInterval(pollTimer);
   }
 
-  loadRecords();
-  pollTimer = window.setInterval(loadRecords, REFRESH_INTERVAL_MS);
+  loadStories();
+  pollTimer = window.setInterval(loadStories, REFRESH_INTERVAL_MS);
 }
 
-elements.form.addEventListener("submit", addRecord);
+elements.form.addEventListener("submit", addStory);
 elements.searchInput.addEventListener("input", (event) => {
-  renderRecords(filterRecords(event.target.value));
+  renderStories(filterStories(event.target.value));
 });
 elements.exportBtn.addEventListener("click", exportCsv);
-elements.recordList.addEventListener("click", deleteRecord);
+elements.storyList.addEventListener("click", deleteStory);
 
 startAutoRefresh();
