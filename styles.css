@@ -299,6 +299,35 @@ textarea {
   background: rgba(255, 255, 255, 0.45);
 }
 
+.status-banner {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.status-banner strong {
+  color: var(--primary-dark);
+}
+
+.status-banner span {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.status-banner[data-tone="success"] {
+  border-color: rgba(39, 118, 63, 0.25);
+  background: rgba(233, 248, 235, 0.9);
+}
+
+.status-banner[data-tone="danger"] {
+  border-color: rgba(158, 61, 47, 0.25);
+  background: rgba(255, 236, 232, 0.95);
+}
+
 .record-list {
   display: grid;
   gap: 1rem;

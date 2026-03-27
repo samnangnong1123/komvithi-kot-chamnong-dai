@@ -1,65 +1,102 @@
 # កម្មវិធីកត់ចំណងដៃ
 
-Website សម្រាប់កត់ត្រាចំណងដៃក្នុងពិធីមង្គលការ ដែលអាច deploy ទៅ Vercel បានភ្លាម។
+Website កត់ចំណងដៃសម្រាប់មង្គលការ ដែល deploy ទៅ Vercel បាន ហើយរក្សាទុកទិន្នន័យនៅលើ Supabase database ពិតៗ។
 
 ## មុខងារ
 
 - បញ្ចូលឈ្មោះភ្ញៀវ
-- កត់ចំនួនទឹកប្រាក់ និងរូបិយប័ណ្ណ
+- កត់ចំណងដៃជា USD ឬ រៀល
 - បន្ថែមប្រភេទអំណោយ និងកំណត់ចំណាំ
-- ស្វែងរក record បាន
-- លុប record បាន
-- Export ទិន្នន័យជា CSV
-- រក្សាទុកទិន្នន័យក្នុង browser ដោយ `localStorage`
+- ស្វែងរក records
+- លុប records
+- Export CSV
+- Sync ទិន្នន័យ online
+- Auto refresh រៀងរាល់ 10 វិនាទី
 
 ## Files
 
-- `index.html` សម្រាប់ layout និង content
-- `styles.css` សម្រាប់ design និង responsive UI
-- `app.js` សម្រាប់ logic កត់ត្រា ស្វែងរក លុប និង export
-- `vercel.json` សម្រាប់ Vercel config
+- `index.html` UI
+- `styles.css` design
+- `app.js` frontend logic + Supabase REST integration
+- `config.js` ដាក់ Supabase URL និង anon key
+- `supabase.sql` SQL សម្រាប់បង្កើត table និង policies
+- `vercel.json` Vercel config
+
+## Supabase Setup
+
+### 1. បង្កើត Supabase project
+
+ចូល `https://supabase.com/dashboard` ហើយបង្កើត project ថ្មីមួយនៅលើ Free plan។
+
+### 2. រត់ SQL
+
+ចូល `SQL Editor` ក្នុង Supabase ហើយ copy content ពី file `supabase.sql` ទៅ run។
+
+វានឹង:
+
+- បង្កើត table `wedding_gifts`
+- បើក Row Level Security
+- បង្កើត policies សម្រាប់ `select`, `insert`, និង `delete`
+
+## Config Frontend
+
+បើក file `config.js` ហើយដាក់តម្លៃពិតរបស់អ្នក:
+
+```js
+window.APP_CONFIG = {
+  supabaseUrl: "https://YOUR-PROJECT.supabase.co",
+  supabaseAnonKey: "YOUR_SUPABASE_ANON_KEY"
+};
+```
+
+រក `supabaseUrl` និង `anon key` ពី:
+
+- Supabase Dashboard
+- `Project Settings`
+- `Data API` ឬ `API Keys`
+
+ចំណាំ:
+
+- ក្នុង project នេះ `anon key` ត្រូវបានប្រើនៅ frontend ដោយផ្ទាល់
+- នេះសមស្របសម្រាប់ public guestbook/workflow សាមញ្ញ
+- បើចង់សុវត្ថិភាពខ្ពស់ជាងនេះ គួរបន្ថែម admin login ឬ server/API layer
 
 ## Run Local
 
-Project នេះជា static website ដូច្នេះអាចបើក `index.html` ដោយផ្ទាល់ក្នុង browser បាន។
-
-បើចង់ run ជា local server អាចប្រើ extension ឬ tool ដូចជា Live Server។
+អាចបើក `index.html` ផ្ទាល់បាន ប៉ុន្តែដើម្បីជៀសវាងបញ្ហា browser ខ្លះៗ គួរប្រើ local server ដូចជា Live Server។
 
 ## Deploy To Vercel
 
-1. បង្កើត GitHub repository មួយ
-2. Upload file ទាំងអស់ទៅ repo
-3. ចូល `https://vercel.com`
-4. ចុច `Add New` -> `Project`
-5. Import GitHub repository
-6. ចុច `Deploy`
+1. commit និង push project ទៅ GitHub
+2. ចូល `https://vercel.com`
+3. `Add New` -> `Project`
+4. Import GitHub repository
+5. Deploy
 
-Vercel នឹង deploy project នេះជា static site ដោយស្វ័យប្រវត្តិ។
+សម្រាប់ static site នេះ Vercel មិនចាំបាច់ build config ពិសេសទេ។
 
-## Git Commands
+## Auto Deploy
 
-បន្ទាប់ពីដំឡើង Git រួច អ្នកអាចរត់ command ទាំងនេះក្នុង folder project:
+បន្ទាប់ពីភ្ជាប់ GitHub ជាមួយ Vercel រួច:
 
 ```bash
-git init
 git add .
-git commit -m "Initial commit"
+git commit -m "update site"
+git push
 ```
 
-បើចង់ភ្ជាប់ទៅ GitHub repo:
+រាល់ `push` ទៅ branch `main` នឹង deploy ថ្មីដោយស្វ័យប្រវត្តិ។
 
-```bash
-git remote add origin <your-repo-url>
-git branch -M main
-git push -u origin main
-```
+## Security Note
 
-## Next.js Option
+SQL policy ក្នុង `supabase.sql` បច្ចុប្បន្នអនុញ្ញាតឲ្យ public users:
 
-បើចង់បម្លែង project នេះទៅ `Next.js` ខ្ញុំអាចជួយរៀបចំ version ថ្មីដែលសមស្របជាងសម្រាប់:
+- មើល records
+- បញ្ចូល records
+- លុប records
 
-- Vercel hosting
-- API routes
-- database integration
+នេះល្អសម្រាប់ version សាមញ្ញ និងតេស្តលឿន។ បើចង់ production ឲ្យមានសុវត្ថិភាពល្អជាងនេះ ខ្ញុំស្នើឲ្យបន្ថែម:
+
 - admin login
-- future scalability
+- authenticated policies
+- server-side API

@@ -60,6 +60,11 @@
             </div>
           </div>
 
+          <div class="status-banner" id="statusBanner" data-tone="muted">
+            <strong>Online Sync</strong>
+            <span id="syncText">សូមកែ `config.js` ដាក់ Supabase URL និង anon key ជាមុនសិន។</span>
+          </div>
+
           <form id="giftForm" class="gift-form">
             <label>
               ឈ្មោះភ្ញៀវ
@@ -75,8 +80,8 @@
               <label>
                 រូបិយប័ណ្ណ
                 <select id="currency" name="currency">
-                  <option value="$">USD ($)</option>
-                  <option value="៛">រៀល (៛)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="KHR">រៀល (៛)</option>
                 </select>
               </label>
             </div>
@@ -137,6 +142,7 @@
       </article>
     </template>
 
+    <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
